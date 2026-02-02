@@ -57,21 +57,15 @@ app = FastAPI(
 import os
 
 # Allowed origins for CORS
-ALLOWED_ORIGINS = [
-    # Production (Cloudflare Pages)
-    "https://agromate.pages.dev",
-    "https://*.agromate.pages.dev",  # Preview deployments
-    # Custom domain (when configured)
-    "https://agromate.com",
-    "https://www.agromate.com",
-    # Development
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# Using wildcard for initial deployment - can be restricted later
+ALLOWED_ORIGINS = ["*"]
 
-# Allow all origins in development mode
-if os.getenv("ENVIRONMENT", "production") == "development":
-    ALLOWED_ORIGINS = ["*"]
+# For stricter security later, use:
+# ALLOWED_ORIGINS = [
+#     "https://agromate.pages.dev",
+#     "https://*.pages.dev",
+#     "http://localhost:3000",
+# ]
 
 app.add_middleware(
     CORSMiddleware,
