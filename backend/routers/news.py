@@ -191,8 +191,10 @@ async def run_pipeline_task():
         
         logger.info(f"Total scraped: {len(all_news)} articles")
         
-        # Step 2: Analyze sentiment
-        analyzer = SentimentAnalyzer(llm_client=MockLLMClient(simulate_latency=False))
+        # Step 2: Analyze sentiment with GROQ (real LLM)
+        from sentiment.llm_client import get_llm_client
+        llm_client = get_llm_client(use_mock=False)  # Use real Groq API
+        analyzer = SentimentAnalyzer(llm_client=llm_client)
         enriched_news = analyzer.analyze_news(all_news)
         
         logger.info(f"Analyzed {len(enriched_news)} articles")
