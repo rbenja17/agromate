@@ -5,7 +5,7 @@
 
 import { NewsListResponse, SentimentStats, PipelineResponse } from '@/types';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
  * Fetch news articles from the API with optional filters.
