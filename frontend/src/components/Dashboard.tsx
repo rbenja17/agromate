@@ -23,6 +23,7 @@ export default function Dashboard() {
     const [filters, setFilters] = useState<FilterState>({
         source: null,
         sentiment: null,
+        commodity: null,  // NUEVO
         dateFrom: null,
         dateTo: null
     });
@@ -44,6 +45,7 @@ export default function Dashboard() {
             const currentFilters = {
                 sentiment: filters.sentiment || undefined,
                 source: filters.source || undefined,
+                commodity: filters.commodity || undefined,  // NUEVO
                 dateFrom: filters.dateFrom || undefined,
                 dateTo: filters.dateTo || undefined
             };
@@ -105,6 +107,7 @@ export default function Dashboard() {
         setFilters({
             source: null,
             sentiment: null,
+            commodity: null,  // NUEVO
             dateFrom: null,
             dateTo: null
         });

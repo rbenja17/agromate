@@ -89,6 +89,25 @@ export default function FilterPanel({
                         </select>
                     </div>
 
+                    {/* Commodity Filter */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Commodity</label>
+                        <select
+                            value={filters.commodity || ''}
+                            onChange={(e) => handleChange('commodity', e.target.value)}
+                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">Todos</option>
+                            <option value="SOJA">Soja</option>
+                            <option value="MAÍZ">Maíz</option>
+                            <option value="TRIGO">Trigo</option>
+                            <option value="GIRASOL">Girasol</option>
+                            <option value="CEBADA">Cebada</option>
+                            <option value="SORGO">Sorgo</option>
+                            <option value="GENERAL">General</option>
+                        </select>
+                    </div>
+
                     {/* Date From */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Desde</label>

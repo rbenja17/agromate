@@ -19,6 +19,7 @@ export async function fetchNews(
     filters?: {
         sentiment?: string;
         source?: string;
+        commodity?: string;  // NUEVO
         dateFrom?: string;
         dateTo?: string;
     }
@@ -33,6 +34,9 @@ export async function fetchNews(
         }
         if (filters?.source) {
             params.append('source', filters.source);
+        }
+        if (filters?.commodity) {
+            params.append('commodity', filters.commodity);
         }
         if (filters?.dateFrom) {
             params.append('date_from', filters.dateFrom);

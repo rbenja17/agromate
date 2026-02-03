@@ -115,9 +115,16 @@ class GroqLLMClient(BaseLLMClient):
             confidence = float(result.get("confidence", 0.5))
             confidence = max(0.0, min(1.0, confidence))
             
+            # Validate and normalize commodity
+            commodity = result.get("commodity", "GENERAL").upper()
+            valid_commodities = ["SOJA", "MAÍZ", "TRIGO", "GIRASOL", "CEBADA", "SORGO", "GENERAL"]
+            if commodity not in valid_commodities:
+                commodity = "GENERAL"
+            
             analysis_result = {
                 "sentiment": sentiment,
-                "confidence": round(confidence, 2)
+                "confidence": round(confidence, 2),
+                "commodity": commodity
             }
             
             if "reasoning" in result:

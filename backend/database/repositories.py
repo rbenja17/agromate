@@ -79,7 +79,8 @@ class NewsRepository:
                     "url": item["url"],
                     "published_at": item["published_at"].isoformat() if item.get("published_at") else None,
                     "sentiment": item.get("sentiment"),
-                    "confidence": item.get("confidence")
+                    "confidence": item.get("confidence"),
+                    "commodity": item.get("commodity", "GENERAL")  # NUEVO
                 }
                 data_list.append(data)
             
@@ -289,6 +290,7 @@ class NewsRepository:
         self,
         source: str = None,
         sentiment: str = None,
+        commodity: str = None,  # NUEVO
         date_from: str = None,
         date_to: str = None,
         limit: int = 100
@@ -299,6 +301,7 @@ class NewsRepository:
         Args:
             source: Filter by source name (exact match)
             sentiment: Filter by sentiment (ALCISTA/BAJISTA/NEUTRAL)
+            commodity: Filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)
             date_from: Filter articles published after this date (ISO format)
             date_to: Filter articles published before this date (ISO format)
             limit: Maximum number of records
@@ -319,6 +322,9 @@ class NewsRepository:
             
             if sentiment:
                 query = query.eq("sentiment", sentiment.upper())
+            
+            if commodity:
+                query = query.eq("commodity", commodity.upper())
             
             if date_from:
                 query = query.gte("published_at", date_from)

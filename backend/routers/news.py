@@ -47,6 +47,7 @@ async def get_news(
     limit: int = Query(default=50, ge=1, le=200, description="Maximum number of articles to return"),
     sentiment: Optional[str] = Query(default=None, description="Filter by sentiment (ALCISTA/BAJISTA/NEUTRAL)"),
     source: Optional[str] = Query(default=None, description="Filter by source name"),
+    commodity: Optional[str] = Query(default=None, description="Filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)"),  # NUEVO
     date_from: Optional[str] = Query(default=None, description="Filter from date (ISO format: YYYY-MM-DD)"),
     date_to: Optional[str] = Query(default=None, description="Filter to date (ISO format: YYYY-MM-DD)")
 ):
@@ -57,6 +58,7 @@ async def get_news(
         - **limit**: Maximum number of articles (default: 50, max: 200)
         - **sentiment**: Optional filter by sentiment type (ALCISTA/BAJISTA/NEUTRAL)
         - **source**: Optional filter by source name
+        - **commodity**: Optional filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)
         - **date_from**: Optional start date filter (YYYY-MM-DD)
         - **date_to**: Optional end date filter (YYYY-MM-DD)
         
@@ -68,12 +70,13 @@ async def get_news(
         repo = NewsRepository(client)
         
         # Check if any filter is applied
-        has_filters = any([sentiment, source, date_from, date_to])
+        has_filters = any([sentiment, source, commodity, date_from, date_to])
         
         if has_filters:
             news_list = repo.get_filtered(
                 source=source,
                 sentiment=sentiment,
+                commodity=commodity,  # NUEVO
                 date_from=date_from,
                 date_to=date_to,
                 limit=limit

@@ -48,6 +48,7 @@ export type SentimentType = 'ALCISTA' | 'BAJISTA' | 'NEUTRAL';
 export interface FilterState {
     source: string | null;
     sentiment: SentimentType | null;
+    commodity: string | null;  // NUEVO
     dateFrom: string | null;  // ISO format YYYY-MM-DD
     dateTo: string | null;    // ISO format YYYY-MM-DD
 }
