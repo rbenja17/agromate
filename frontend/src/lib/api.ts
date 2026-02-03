@@ -144,7 +144,7 @@ export async function fetchDailyTrends(
     days: number = 7,
     filters?: {
         sentiment?: string;
-        source?: string;
+        source?: string[];
         dateFrom?: string;
         dateTo?: string;
     }
@@ -156,8 +156,8 @@ export async function fetchDailyTrends(
         if (filters?.sentiment) {
             params.append('sentiment', filters.sentiment);
         }
-        if (filters?.source) {
-            params.append('source', filters.source);
+        if (filters?.source && filters.source.length > 0) {
+            filters.source.forEach(src => params.append('source', src));
         }
         if (filters?.dateFrom) {
             params.append('date_from', filters.dateFrom);
@@ -189,7 +189,7 @@ export async function fetchDailyTrends(
 export async function fetchSourceTrends(
     filters?: {
         sentiment?: string;
-        source?: string;
+        source?: string[];
         dateFrom?: string;
         dateTo?: string;
     }
@@ -200,8 +200,8 @@ export async function fetchSourceTrends(
         if (filters?.sentiment) {
             params.append('sentiment', filters.sentiment);
         }
-        if (filters?.source) {
-            params.append('source', filters.source);
+        if (filters?.source && filters.source.length > 0) {
+            filters.source.forEach(src => params.append('source', src));
         }
         if (filters?.dateFrom) {
             params.append('date_from', filters.dateFrom);
@@ -238,7 +238,7 @@ export async function fetchSentimentTimeline(
     days: number = 7,
     filters?: {
         sentiment?: string;
-        source?: string;
+        source?: string[];
         dateFrom?: string;
         dateTo?: string;
     }
@@ -250,8 +250,8 @@ export async function fetchSentimentTimeline(
         if (filters?.sentiment) {
             params.append('sentiment', filters.sentiment);
         }
-        if (filters?.source) {
-            params.append('source', filters.source);
+        if (filters?.source && filters.source.length > 0) {
+            filters.source.forEach(src => params.append('source', src));
         }
         if (filters?.dateFrom) {
             params.append('date_from', filters.dateFrom);
