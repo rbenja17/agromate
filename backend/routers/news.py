@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
@@ -46,8 +46,8 @@ def dict_to_news_response(news_dict: dict) -> NewsResponse:
 async def get_news(
     limit: int = Query(default=50, ge=1, le=200, description="Maximum number of articles to return"),
     sentiment: Optional[str] = Query(default=None, description="Filter by sentiment (ALCISTA/BAJISTA/NEUTRAL)"),
-    source: Optional[str] = Query(default=None, description="Filter by source name"),
-    commodity: Optional[str] = Query(default=None, description="Filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)"),  # NUEVO
+    source: Optional[List[str]] = Query(default=None, description="Filter by source names (multi-select)"),  # Cambiado a List[str]
+    commodity: Optional[str] = Query(default=None, description="Filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)"),
     date_from: Optional[str] = Query(default=None, description="Filter from date (ISO format: YYYY-MM-DD)"),
     date_to: Optional[str] = Query(default=None, description="Filter to date (ISO format: YYYY-MM-DD)")
 ):
@@ -57,7 +57,7 @@ async def get_news(
     Parameters:
         - **limit**: Maximum number of articles (default: 50, max: 200)
         - **sentiment**: Optional filter by sentiment type (ALCISTA/BAJISTA/NEUTRAL)
-        - **source**: Optional filter by source name
+        - **source**: Optional filter by source names (can be specified multiple times for multi-select)
         - **commodity**: Optional filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)
         - **date_from**: Optional start date filter (YYYY-MM-DD)
         - **date_to**: Optional end date filter (YYYY-MM-DD)
@@ -74,9 +74,9 @@ async def get_news(
         
         if has_filters:
             news_list = repo.get_filtered(
-                source=source,
+                source=source,  # Ahora acepta List[str]
                 sentiment=sentiment,
-                commodity=commodity,  # NUEVO
+                commodity=commodity,
                 date_from=date_from,
                 date_to=date_to,
                 limit=limit

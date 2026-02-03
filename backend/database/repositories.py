@@ -288,9 +288,9 @@ class NewsRepository:
     
     def get_filtered(
         self,
-        source: str = None,
+        source: List[str] = None,  # Cambiado de str a List[str]
         sentiment: str = None,
-        commodity: str = None,  # NUEVO
+        commodity: str = None,
         date_from: str = None,
         date_to: str = None,
         limit: int = 100
@@ -299,7 +299,7 @@ class NewsRepository:
         Get news articles with multiple filters.
         
         Args:
-            source: Filter by source name (exact match)
+            source: Filter by source names (list for multi-select, OR operation)
             sentiment: Filter by sentiment (ALCISTA/BAJISTA/NEUTRAL)
             commodity: Filter by commodity (SOJA/MAÍZ/TRIGO/GIRASOL/CEBADA/SORGO/GENERAL)
             date_from: Filter articles published after this date (ISO format)
@@ -317,8 +317,9 @@ class NewsRepository:
             )
             
             # Apply filters
-            if source:
-                query = query.eq("source", source)
+            if source and len(source) > 0:
+                # Multi-select: use .in_() for OR operation
+                query = query.in_("source", source)
             
             if sentiment:
                 query = query.eq("sentiment", sentiment.upper())

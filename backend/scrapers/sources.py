@@ -26,6 +26,26 @@ RSS_SOURCES: list[RSSSource] = [
         "url": "https://www.infocampo.com.ar/feed/",
         "enabled": True,
     },
+    {
+        "name": "Clarín Rural",
+        "url": "https://www.clarin.com/rss/rural/",
+        "enabled": True,
+    },
+    {
+        "name": "La Nación Campo",
+        "url": "https://servicios.lanacion.com.ar/herramientas/rss/categoria_id=30",
+        "enabled": True,
+    },
+    {
+        "name": "Agrovoz",
+        "url": "https://www.lavoz.com.ar/rss/agro/",
+        "enabled": True,
+    },
+    {
+        "name": "Bolsa de Comercio de Rosario",
+        "url": "https://www.bcr.com.ar/es/rss-news",
+        "enabled": True,
+    },
 ]
 
 

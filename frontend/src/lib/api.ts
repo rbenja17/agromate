@@ -18,8 +18,8 @@ export async function fetchNews(
     limit: number = 50,
     filters?: {
         sentiment?: string;
-        source?: string;
-        commodity?: string;  // NUEVO
+        source?: string[];  // Cambiado a array
+        commodity?: string;
         dateFrom?: string;
         dateTo?: string;
     }
@@ -32,8 +32,9 @@ export async function fetchNews(
         if (filters?.sentiment) {
             params.append('sentiment', filters.sentiment);
         }
-        if (filters?.source) {
-            params.append('source', filters.source);
+        if (filters?.source && filters.source.length > 0) {
+            // Enviar múltiples parámetros source
+            filters.source.forEach(src => params.append('source', src));
         }
         if (filters?.commodity) {
             params.append('commodity', filters.commodity);

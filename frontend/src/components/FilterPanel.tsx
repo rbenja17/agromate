@@ -19,12 +19,13 @@ export default function FilterPanel({
 }: FilterPanelProps) {
     const [sources, setSources] = useState<string[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [sourcesDropdownOpen, setSourcesDropdownOpen] = useState(false);  // NUEVO
 
     useEffect(() => {
         fetchSources().then(setSources);
     }, []);
 
-    const handleChange = (key: keyof FilterState, value: string | null) => {
+    const handleChange = (key: keyof FilterState, value: string | string[] | null) => {
         onFilterChange({
             ...filters,
             [key]: value === '' ? null : value
@@ -58,20 +59,51 @@ export default function FilterPanel({
             </div>
 
             {isExpanded && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Source Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Fuente</label>
-                        <select
-                            value={filters.source || ''}
-                            onChange={(e) => handleChange('source', e.target.value)}
-                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Todas las fuentes</option>
-                            {sources.map((source) => (
-                                <option key={source} value={source}>{source}</option>
-                            ))}
-                        </select>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Source Filter - Multi-Select */}
+                    <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Fuentes</label>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setSourcesDropdownOpen(!sourcesDropdownOpen)}
+                                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
+                            >
+                                <span className="text-sm">
+                                    {!filters.source || filters.source.length === 0
+                                        ? 'Todas las fuentes'
+                                        : `${filters.source.length} seleccionada(s)`}
+                                </span>
+                                <svg className={`w-4 h-4 transition-transform ${sourcesDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {sourcesDropdownOpen && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                    {sources.map((source) => (
+                                        <label
+                                            key={source}
+                                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={filters.source?.includes(source) || false}
+                                                onChange={(e) => {
+                                                    const currentSources = filters.source || [];
+                                                    const newSources = e.target.checked
+                                                        ? [...currentSources, source]
+                                                        : currentSources.filter(s => s !== source);
+                                                    handleChange('source', newSources.length > 0 ? newSources : null);
+                                                }}
+                                                className="rounded text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span className="text-sm text-gray-700">{source}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Sentiment Filter */}

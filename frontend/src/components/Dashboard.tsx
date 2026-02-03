@@ -44,8 +44,8 @@ export default function Dashboard() {
             // Build filters object
             const currentFilters = {
                 sentiment: filters.sentiment || undefined,
-                source: filters.source || undefined,
-                commodity: filters.commodity || undefined,  // NUEVO
+                source: filters.source && filters.source.length > 0 ? filters.source : undefined,  // Solo enviar si hay fuentes
+                commodity: filters.commodity || undefined,
                 dateFrom: filters.dateFrom || undefined,
                 dateTo: filters.dateTo || undefined
             };

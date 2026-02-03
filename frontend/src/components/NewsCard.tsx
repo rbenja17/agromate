@@ -64,11 +64,17 @@ export default function NewsCard({ article }: NewsCardProps) {
                 </a>
             </div>
 
-            {/* Commodity tag (optional) */}
-            {article.commodity && (
+            {/* Commodity tag (badge visual con emoji) */}
+            {article.commodity && article.commodity !== 'GENERAL' && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-500">
-                        Commodity: <span className="font-medium text-gray-700">{article.commodity}</span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                        {article.commodity === 'SOJA' && '🌱'}
+                        {article.commodity === 'MAÍZ' && '🌽'}
+                        {article.commodity === 'TRIGO' && '🌾'}
+                        {article.commodity === 'GIRASOL' && '🌻'}
+                        {article.commodity === 'CEBADA' && '🍺'}
+                        {article.commodity === 'SORGO' && '🌿'}
+                        {article.commodity}
                     </span>
                 </div>
             )}

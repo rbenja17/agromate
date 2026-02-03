@@ -46,9 +46,9 @@ export interface HealthResponse {
 export type SentimentType = 'ALCISTA' | 'BAJISTA' | 'NEUTRAL';
 
 export interface FilterState {
-    source: string | null;
+    source: string[] | null;  // Cambiado de string a string[]
     sentiment: SentimentType | null;
-    commodity: string | null;  // NUEVO
+    commodity: string | null;
     dateFrom: string | null;  // ISO format YYYY-MM-DD
     dateTo: string | null;    // ISO format YYYY-MM-DD
 }
