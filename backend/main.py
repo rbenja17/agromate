@@ -145,11 +145,14 @@ async def not_found_handler(request, exc):
 async def internal_error_handler(request, exc):
     """Custom 500 handler."""
     logger.error(f"Internal server error: {exc}")
-    return {
-        "error": "Internal Server Error",
-        "message": "An unexpected error occurred",
-        "status_code": 500
-    }
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "message": f"DEBUG INFO: {str(exc)}",
+            "status_code": 500
+        }
+    )
 
 
 if __name__ == "__main__":
