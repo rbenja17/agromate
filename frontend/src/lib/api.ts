@@ -295,3 +295,24 @@ export async function fetchSources(): Promise<string[]> {
         return [];
     }
 }
+
+/**
+ * Fetch latest market data.
+ * 
+ * @returns Promise with market data
+ */
+export async function fetchMarketData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/market/latest`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('Error fetching market data:', error);
+        throw new Error('Failed to fetch market data.');
+    }
+}
