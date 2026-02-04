@@ -62,28 +62,30 @@ export default function MarketOverview() {
     }
 
     const commodities = [
-        { key: 'soja_cbot', name: 'Soja Chicago', icon: '🌱' },
-        { key: 'maiz_cbot', name: 'Maíz Chicago', icon: '🌽' },
-        { key: 'trigo_cbot', name: 'Trigo Chicago', icon: '🌾' }
+        { key: 'soja_rosario', name: 'Soja Rosario', icon: '🌱' },
+        { key: 'maiz_rosario', name: 'Maíz Rosario', icon: '🌽' },
+        { key: 'trigo_rosario', name: 'Trigo Rosario', icon: '🌾' },
+        { key: 'dolar', name: 'Dólar Oficial', icon: '💵' }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             {commodities.map((item) => {
                 const info = data.data[item.key] as MarketData;
 
                 if (!info || 'error' in info) {
                     return (
                         <div key={item.key} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                            <h3 className="text-gray-500 font-medium text-sm flex items-center gap-2">
+                            <h3 className="text-gray-500 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
                                 <span>{item.icon}</span> {item.name}
                             </h3>
-                            <p className="text-gray-400 mt-2">No disponible</p>
+                            <p className="text-gray-400 mt-2 text-sm">No disponible</p>
                         </div>
                     );
                 }
 
                 const isPositive = info.change_percent >= 0;
+                const isArs = info.currency === 'ARS';
 
                 return (
                     <div key={item.key} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -92,16 +94,15 @@ export default function MarketOverview() {
                         </h3>
 
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-3xl font-bold text-gray-900">
-                                {info.currency === 'USD' ? 'US$ ' : '$ '}
-                                {info.price.toFixed(2)}
+                            <span className="text-2xl font-bold text-gray-900">
+                                {isArs ? '$' : 'US$ '}
+                                {info.price.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
 
                         <div className={`mt-2 text-sm font-medium flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                             <span>{isPositive ? '↑' : '↓'}</span>
                             <span>{Math.abs(info.change_percent).toFixed(2)}%</span>
-                            <span className="text-gray-400 text-xs font-normal ml-1">vs cierre anterior</span>
                         </div>
                     </div>
                 );

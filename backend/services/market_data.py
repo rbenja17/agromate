@@ -2,6 +2,8 @@
 
 import logging
 import yfinance as yf
+import pandas as pd
+from datetime import datetime
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -9,68 +11,59 @@ logger = logging.getLogger(__name__)
 class MarketDataService:
     """Service to fetch market data for agricultural commodities."""
     
-    # Mapping of simplified internal keys to Yahoo Finance tickers
+from scrapers.market_scraper import AgrofyMarketScraper
+
+class MarketDataService:
+    """Service to fetch market data for agricultural commodities."""
+    
+    # Mapping of simplified internal keys to Yahoo Finance tickers (ONLY FOR USD)
     TICKERS = {
-        "soja_cbot": "ZS=F",  # Soybean Futures
-        "maiz_cbot": "ZC=F",  # Corn Futures
-        "trigo_cbot": "ZW=F", # Wheat Futures
         "dolar": "ARS=X"      # USD/ARS Exchange Rate
     }
     
     @classmethod
-    def get_latest_prices(cls) -> Dict[str, Any]:
+    async def get_latest_prices(cls) -> Dict[str, Any]:
         """
-        Fetch latest prices for monitored commodities.
-        
-        Returns:
-            Dictionary with commodity data.
+        Fetch latest prices: Grains from Agrofy, Dollar from Yahoo.
         """
         results = {}
         
         try:
-            # Join tickers with space for bulk download
-            tickers_str = " ".join(cls.TICKERS.values())
-            
-            # Download recent data (last 5 days to ensure we get last close)
-            # group_by='ticker' ensures we get a structure we can iterate easily
-            data = yf.download(tickers_str, period="5d", group_by='column', progress=False)
-            
-            # Process each mapped ticker
-            for name, symbol in cls.TICKERS.items():
-                try:
-                    # Extract Close series for the symbol
-                    # yfinance structure varies by version, handling potential multi-index
-                    # Usually: data['Close'][symbol]
-                    
-                    if symbol in data['Close']:
-                        series = data['Close'][symbol]
-                    else:
-                        # Fallback if structure is different or flat
-                        # Try to re-fetch single if bulk failed structure
-                        ticker_data = yf.Ticker(symbol)
-                        hist = ticker_data.history(period="5d")
-                        series = hist['Close']
-                        
-                    # Get last valid value
-                    last_price = series.dropna().iloc[-1]
-                    # Get previous close for change calc
-                    prev_price = series.dropna().iloc[-2] if len(series.dropna()) > 1 else last_price
-                    
+            # 1. Fetch Dollar from Yahoo Finance (Fast & Reliable for FX)
+            try:
+                # Download just USD
+                data = yf.download("ARS=X", period="5d", progress=False)
+                if not data.empty:
+                    # Series handling
+                    series = data['Close']
+                    if isinstance(series, pd.DataFrame): # Handle multi-index if single ticker sometimes returns weird
+                         series = series.iloc[:, 0]
+                         
+                    last_price = float(series.dropna().iloc[-1])
+                    prev_price = float(series.dropna().iloc[-2] if len(series.dropna()) > 1 else last_price)
                     change = ((last_price - prev_price) / prev_price) * 100
                     
-                    results[name] = {
-                        "price": round(float(last_price), 2),
-                        "currency": "USD" if name != "dolar" else "ARS",
-                        "change_percent": round(float(change), 2),
-                        "symbol": symbol
+                    results["dolar"] = {
+                        "price": round(last_price, 2),
+                        "currency": "ARS",
+                        "change_percent": round(change, 2),
+                        "symbol": "USD/ARS",
+                        "name": "Dólar Oficial"
                     }
-                    
-                except Exception as e:
-                    logger.error(f"Error processing {name} ({symbol}): {e}")
-                    results[name] = {"error": "unavailable", "symbol": symbol}
+            except Exception as e:
+                logger.error(f"Yahoo Finance Error: {e}")
+                results["dolar"] = {"error": "unavailable", "symbol": "USD/ARS"}
+
+            # 2. Fetch Grains from Agrofy (Real Local Prices)
+            agrofy_data = await AgrofyMarketScraper.get_prices()
+            if not agrofy_data:
+                # Fallback to mock if scrape fails
+                agrofy_data = AgrofyMarketScraper.get_mock_agrofy_data()
+            
+            results.update(agrofy_data)
                     
             return {
-                "timestamp": str(data.index[-1]),
+                "timestamp": str(datetime.utcnow()), # Use dynamic timestamp
                 "data": results
             }
             

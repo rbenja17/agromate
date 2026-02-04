@@ -13,20 +13,16 @@ export default function MarketTicker() {
                     showSymbolLogo={true}
                     symbols={[
                         {
-                            proName: "CBOT:ZS1!",
+                            proName: "ZS1!",
                             title: "Soja (Futuro)"
                         },
                         {
-                            proName: "CBOT:ZC1!",
-                            title: "Maíz (Futuro)"
-                        },
-                        {
-                            proName: "CBOT:ZW1!",
-                            title: "Trigo (Futuro)"
-                        },
-                        {
                             proName: "FX_IDC:USDARS",
-                            title: "USD/ARS"
+                            title: "Dólar Oficial"
+                        },
+                        {
+                            proName: "BCBA:SOJ.ROS", // Try specific local symbol if available on TV, else keep futures
+                            title: "Soja (Futuro)"
                         }
                     ]}
                 />
