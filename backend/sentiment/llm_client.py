@@ -59,20 +59,42 @@ class AgroSentimentResponse(BaseModel):
 
     @validator("commodity")
     def validate_commodity(cls, v):
-        v = v.upper()
-        valid = ["SOJA", "MAÍZ", "TRIGO", "GIRASOL", "CEBADA", "SORGO", "GENERAL"]
-        mapping = {"MAIZ": "MAÍZ", "SOYBEAN": "SOJA", "WHEAT": "TRIGO", "CORN": "MAÍZ", "SUNFLOWER": "GIRASOL"}
-        if v in mapping:
-            return mapping[v]
-        if v not in valid:
+        if not v:
             return "GENERAL"
-        return v
+        v = v.upper().strip()
+        
+        # Handle irrelevant explicitly
+        if "IRRELEVANT" in v:
+            return "IRRELEVANT"
+            
+        # Allow multi-commodity (comma separated)
+        parts = [p.strip() for p in v.split(",") if p.strip()]
+        valid_list = ["SOJA", "MAÍZ", "TRIGO", "GIRASOL", "CEBADA", "SORGO", "GENERAL"]
+        mapping = {
+            "MAIZ": "MAÍZ", "SOYBEAN": "SOJA", "WHEAT": "TRIGO", 
+            "CORN": "MAÍZ", "SUNFLOWER": "GIRASOL", "SORGHUM": "SORGO",
+            "BARLEY": "CEBADA"
+        }
+        
+        cleaned_parts = []
+        for p in parts:
+            if p in mapping:
+                cleaned_parts.append(mapping[p])
+            elif p in valid_list:
+                cleaned_parts.append(p)
+            # If part is not valid, ignore or map to GENERAL if it's the only one?
+            # Let's be permissive: if it contains valid ones, keep them.
+        
+        if not cleaned_parts:
+            return "GENERAL" # Fallback if no valid commodity found
+            
+        return ", ".join(list(set(cleaned_parts))) # Remove duplicates
 
 class GroqLLMClient(BaseLLMClient):
     """
     Real LLM client using Groq API (FREE TIER).
     
-    Uses llama-3.1-70b-versatile for high-quality sentiment analysis.
+    Uses llama-3.3-70b-versatile for high-quality sentiment analysis.
     Free tier: 30 requests per minute, 14,400 per day.
     """
     
@@ -82,7 +104,7 @@ class GroqLLMClient(BaseLLMClient):
         
         Args:
             api_key: Groq API key. If not provided, reads from GROQ_API_KEY env var.
-            model: Model to use (default: llama-3.1-70b-versatile)
+            model: Model to use (default: llama-3.3-70b-versatile)
             
         Raises:
             ValueError: If no API key is provided or found in environment.
@@ -180,7 +202,7 @@ class GroqLLMClient(BaseLLMClient):
             except Exception as e:
                 # Pydantic validation error or other logic error
                 logger.error(f"Validation failed: {e}")
-                return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "validation_error"}
+                return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "IRRELEVANT", "error": "validation_error"}
             
         except Exception as e:
             logger.error(f"Groq API connection error: {e}")

@@ -83,6 +83,8 @@ app.add_middleware(
 # Include routers
 app.include_router(news_router)
 app.include_router(trends_router)
+from routers.market import router as market_router
+app.include_router(market_router)
 
 
 @app.get("/", tags=["root"])

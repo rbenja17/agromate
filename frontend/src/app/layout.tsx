@@ -9,6 +9,8 @@ export const metadata: Metadata = {
     description: "Análisis de sentimiento del mercado agropecuario argentino (Matba Rofex)",
 };
 
+import MarketTicker from "@/components/MarketTicker";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -16,7 +18,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es">
-            <body className={inter.className}>{children}</body>
+            <body className={inter.className}>
+                <MarketTicker />
+                {children}
+            </body>
         </html>
     );
 }

@@ -39,18 +39,29 @@ Clasifica el IMPACTO EN PRECIOS y detecta el COMMODITY PRINCIPAL mencionado en l
    - Tecnología, eventos sin impacto inmediato en precios
    - **DUDA = NEUTRAL**
 
-**REGLAS DE COMMODITY:**
-- Si menciona UN solo commodity → detectar cuál
-- Si menciona "granos en general", "retenciones", "dólar soja" sin especificar → **GENERAL**
-- Si menciona ganadería → **GENERAL** (y sentiment NEUTRAL)
-- Si NO menciona commodities agrícolas → **GENERAL** (y sentiment NEUTRAL)
+**REGLAS DE IDENTIFICACIÓN DE COMMODITY:**
+- Detecta **TODOS** los commodities agropecuarios mencionados que sean relevantes.
+- Formato de salida: "COMMODITY1" o "COMMODITY1, COMMODITY2".
+- Si menciona "granos", "cereales", "cosecha" sin especificar: **GENERAL**
+- Si la noticia es sobre ganadería (cerdos, vacas), política general, economía macro, o clima en zonas no agrícolas: **IRRELEVANT**
+- Si NO tiene relación directa con el mercado de granos: **IRRELEVANT**
+
+**LISTA OFICIAL:**
+- SOJA
+- MAÍZ
+- TRIGO
+- GIRASOL
+- CEBADA
+- SORGO
+- GENERAL
+- IRRELEVANT (Para noticias que NO se deben mostrar)
 
 Responde SOLO con JSON válido:
 {
   "sentiment": "ALCISTA" | "BAJISTA" | "NEUTRAL",
   "confidence": 0.0-1.0,
   "reasoning": "máximo 15 palabras",
-  "commodity": "SOJA" | "MAÍZ" | "TRIGO" | "GIRASOL" | "CEBADA" | "SORGO" | "GENERAL"
+  "commodity": "SOJA" | "MAÍZ, TRIGO" | "GENERAL" | "IRRELEVANT"
 }"""
 
 

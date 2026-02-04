@@ -13,6 +13,7 @@ import TrendChart from './TrendChart';
 import SourcePieChart from './SourcePieChart';
 import SentimentTimeline from './SentimentTimeline';
 import FilterPanel from './FilterPanel';
+import MarketOverview from './MarketOverview';
 
 export default function Dashboard() {
     const [news, setNews] = useState<Article[]>([]);
@@ -182,6 +183,9 @@ export default function Dashboard() {
 
             {/* Main content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Market Overview */}
+                <MarketOverview />
+
                 {/* Stats cards */}
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

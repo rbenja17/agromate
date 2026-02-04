@@ -47,6 +47,11 @@ class SentimentAnalyzer:
                 # Analyze the news title
                 analysis = self.llm_client.analyze(news.title)
                 
+                # Rule: Filter out IRRELEVANT news
+                if analysis.get("commodity") == "IRRELEVANT":
+                    logger.info(f"Skipping irrelevant news: {news.title[:50]}...")
+                    continue
+
                 # Create enriched news item with sentiment data
                 enriched_item = {
                     # Original news data
@@ -57,6 +62,7 @@ class SentimentAnalyzer:
                     # Sentiment analysis results
                     "sentiment": analysis["sentiment"],
                     "confidence": analysis["confidence"],
+                    "commodity": analysis.get("commodity", "GENERAL")
                 }
                 
                 enriched_news.append(enriched_item)
@@ -68,17 +74,8 @@ class SentimentAnalyzer:
                 
             except Exception as e:
                 logger.error(f"Failed to analyze news '{news.title}': {e}")
-                # Add item with safe fallback state (NEUTRAL instead of ERROR)
-                enriched_news.append({
-                    "title": news.title,
-                    "source": news.source,
-                    "url": news.url,
-                    "published_at": news.published_at,
-                    "sentiment": "NEUTRAL",
-                    "confidence": 0.0,
-                    "commodity": "GENERAL",
-                    "error": str(e)
-                })
+                # Skip items that failed to analyze to avoid "Desconocido" in UI
+                continue
         
         logger.info(f"Sentiment analysis completed: {len(enriched_news)} articles processed")
         
