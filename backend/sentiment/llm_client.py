@@ -34,6 +34,40 @@ class BaseLLMClient(ABC):
         return results
 
 
+
+# Import Pydantic at module level
+try:
+    from pydantic import BaseModel, Field, validator, ValidationError
+except ImportError:
+    # Fallback/mock for Pydantic if missing (though it should be there)
+    BaseModel = object
+    Field = lambda *args, **kwargs: None
+    validator = lambda *args, **kwargs: lambda f: f
+
+class AgroSentimentResponse(BaseModel):
+    sentiment: str = Field(..., description="ALCISTA, BAJISTA, or NEUTRAL")
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    commodity: str = Field("GENERAL", description="Primary commodity or GENERAL")
+    reasoning: str = Field(None, description="Brief explanation")
+
+    @validator("sentiment")
+    def validate_sentiment(cls, v):
+        v = v.upper()
+        if v not in ["ALCISTA", "BAJISTA", "NEUTRAL"]:
+            return "NEUTRAL"
+        return v
+
+    @validator("commodity")
+    def validate_commodity(cls, v):
+        v = v.upper()
+        valid = ["SOJA", "MAÍZ", "TRIGO", "GIRASOL", "CEBADA", "SORGO", "GENERAL"]
+        mapping = {"MAIZ": "MAÍZ", "SOYBEAN": "SOJA", "WHEAT": "TRIGO", "CORN": "MAÍZ", "SUNFLOWER": "GIRASOL"}
+        if v in mapping:
+            return mapping[v]
+        if v not in valid:
+            return "GENERAL"
+        return v
+
 class GroqLLMClient(BaseLLMClient):
     """
     Real LLM client using Groq API (FREE TIER).
@@ -105,42 +139,53 @@ class GroqLLMClient(BaseLLMClient):
             )
             
             response_text = response.choices[0].message.content.strip()
-            result = json.loads(response_text)
             
-            # Validate and normalize
-            sentiment = result.get("sentiment", "NEUTRAL").upper()
-            if sentiment not in ["ALCISTA", "BAJISTA", "NEUTRAL"]:
-                sentiment = "NEUTRAL"
-            
-            confidence = float(result.get("confidence", 0.5))
-            confidence = max(0.0, min(1.0, confidence))
-            
-            # Validate and normalize commodity
-            commodity = result.get("commodity", "GENERAL").upper()
-            valid_commodities = ["SOJA", "MAÍZ", "TRIGO", "GIRASOL", "CEBADA", "SORGO", "GENERAL"]
-            if commodity not in valid_commodities:
-                commodity = "GENERAL"
-            
-            analysis_result = {
-                "sentiment": sentiment,
-                "confidence": round(confidence, 2),
-                "commodity": commodity
-            }
-            
-            if "reasoning" in result:
-                analysis_result["reasoning"] = result["reasoning"]
-            
-            logger.debug(f"Groq analysis: '{text[:50]}...' -> {analysis_result}")
-            
-            return analysis_result
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Groq response as JSON: {e}")
-            return {"sentiment": "NEUTRAL", "confidence": 0.5, "error": "parse_error"}
+            # Robust JSON parsing
+            try:
+                # Handle potential markdown code blocks
+                if "```json" in response_text:
+                    response_text = response_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in response_text:
+                    response_text = response_text.split("```")[1].split("```")[0].strip()
+                
+                result_dict = json.loads(response_text)
+                
+                # Pydantic Validation
+                validated = AgroSentimentResponse(**result_dict)
+                
+                # Logic Rules
+                final_sentiment = validated.sentiment
+                final_confidence = validated.confidence
+                
+                # Rule: Low confidence (< 0.5) -> NEUTRAL
+                if final_confidence < 0.5:
+                    final_sentiment = "NEUTRAL"
+                    
+                analysis_result = {
+                    "sentiment": final_sentiment,
+                    "confidence": round(final_confidence, 2),
+                    "commodity": validated.commodity
+                }
+                
+                if validated.reasoning:
+                    analysis_result["reasoning"] = validated.reasoning
+                
+                logger.debug(f"Groq analysis: '{text[:30]}...' -> {analysis_result['sentiment']} ({analysis_result['confidence']})")
+                return analysis_result
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse Groq response: {response_text[:100]}... Error: {e}")
+                return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "json_parse_error"}
+                
+            except Exception as e:
+                # Pydantic validation error or other logic error
+                logger.error(f"Validation failed: {e}")
+                return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "validation_error"}
             
         except Exception as e:
-            logger.error(f"Groq API error: {e}")
-            raise RuntimeError(f"Groq API call failed: {e}")
+            logger.error(f"Groq API connection error: {e}")
+            # Fallback to defaults instead of raising exception only if critical
+            return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "api_error"}
 
 
 class MockLLMClient(BaseLLMClient):

@@ -68,14 +68,15 @@ class SentimentAnalyzer:
                 
             except Exception as e:
                 logger.error(f"Failed to analyze news '{news.title}': {e}")
-                # Add item with error state
+                # Add item with safe fallback state (NEUTRAL instead of ERROR)
                 enriched_news.append({
                     "title": news.title,
                     "source": news.source,
                     "url": news.url,
                     "published_at": news.published_at,
-                    "sentiment": "ERROR",
+                    "sentiment": "NEUTRAL",
                     "confidence": 0.0,
+                    "commodity": "GENERAL",
                     "error": str(e)
                 })
         
