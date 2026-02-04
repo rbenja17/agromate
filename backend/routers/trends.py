@@ -29,8 +29,8 @@ def calculate_weighted_sentiment(items):
         return 0.0
     
     # Filtramos por sentimiento
-    alcista_items = [i for i in items if i.get('sentiment', '').upper() == 'ALCISTA']
-    bajista_items = [i for i in items if i.get('sentiment', '').upper() == 'BAJISTA']
+    alcista_items = [i for i in items if (i.get('sentiment') or '').upper() == 'ALCISTA']
+    bajista_items = [i for i in items if (i.get('sentiment') or '').upper() == 'BAJISTA']
     
     # Sumamos la confianza (Confidence Mass)
     # Si no hay 'confidence', asumimos 0.5 por defecto
