@@ -58,11 +58,7 @@ import os
 
 # Allowed origins for CORS
 # Using wildcard for initial deployment - can be restricted later
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://agromate.pages.dev",
-]
+ALLOWED_ORIGINS = ["*"]
 
 # For stricter security later, use:
 # ALLOWED_ORIGINS = [
