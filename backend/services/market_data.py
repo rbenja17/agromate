@@ -8,9 +8,6 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-class MarketDataService:
-    """Service to fetch market data for agricultural commodities."""
-    
 from scrapers.market_scraper import AgrofyMarketScraper
 
 class MarketDataService:
