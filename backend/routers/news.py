@@ -207,17 +207,27 @@ async def run_pipeline_task():
         repo = NewsRepository(client)
         
         # Prepare sentiment data
+        # Prepare sentiment data and filter out items without sentiment
+        valid_enriched_news = [item for item in enriched_news if item.get("sentiment")]
+        
         sentiment_data = {
             item["url"]: {
                 "sentiment": item["sentiment"],
                 "confidence": item["confidence"]
             }
-            for item in enriched_news
+            for item in valid_enriched_news
         }
         
-        results = repo.upsert_news(all_news, sentiment_data)
+        # Only upsert news that have been successfully enriched
+        # We extract the original news items corresponding to the enriched ones
+        valid_urls = set(item["url"] for item in valid_enriched_news)
+        valid_news_objects = [n for n in all_news if str(n.url) in valid_urls]
         
-        logger.info(f"Pipeline completed: {len(results)} articles saved")
+        if valid_news_objects:
+             results = repo.upsert_news(valid_news_objects, sentiment_data)
+             logger.info(f"Pipeline completed: {len(results)} articles saved")
+        else:
+             logger.info("Pipeline completed: No valid articles to save")
         
     except Exception as e:
         logger.error(f"Pipeline task failed: {e}")
