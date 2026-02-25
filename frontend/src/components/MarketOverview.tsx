@@ -35,18 +35,17 @@ export default function MarketOverview() {
         };
 
         loadMarket();
-        // Refresh every 60 seconds
         const interval = setInterval(loadMarket, 60000);
         return () => clearInterval(interval);
     }, []);
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
-                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="glass-card rounded-xl p-5 animate-pulse">
+                        <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/2 mb-3"></div>
+                        <div className="h-6 bg-gray-200 dark:bg-white/10 rounded w-2/3"></div>
                     </div>
                 ))}
             </div>
@@ -55,32 +54,32 @@ export default function MarketOverview() {
 
     if (error || !data || !data.data) {
         return (
-            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-lg mb-8 text-center text-sm">
-                Datos de mercado no disponibles
+            <div className="glass-card rounded-xl p-4 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Datos de mercado no disponibles</p>
             </div>
         );
     }
 
     const commodities = [
-        { key: 'soja_rosario', name: 'Soja (CBOT)', icon: '🌱' },
-        { key: 'maiz_rosario', name: 'Maíz (CBOT)', icon: '🌽' },
-        { key: 'trigo_rosario', name: 'Trigo (CBOT)', icon: '🌾' },
-        { key: 'dolar', name: 'Dólar Oficial', icon: '💵' },
-        { key: 'dolar_blue', name: 'Dólar Blue', icon: '💸' }
+        { key: 'soja_rosario', name: 'Soja', icon: '🌱' },
+        { key: 'maiz_rosario', name: 'Maíz', icon: '🌽' },
+        { key: 'trigo_rosario', name: 'Trigo', icon: '🌾' },
+        { key: 'dolar', name: 'USD Oficial', icon: '💵' },
+        { key: 'dolar_blue', name: 'USD Blue', icon: '💸' }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {commodities.map((item) => {
                 const info = data.data[item.key] as MarketData;
 
                 if (!info || 'error' in info) {
                     return (
-                        <div key={item.key} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
+                        <div key={item.key} className="glass-card rounded-xl p-5">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                                 <span>{item.icon}</span> {item.name}
-                            </h3>
-                            <p className="text-gray-400 mt-2 text-sm">No disponible</p>
+                            </p>
+                            <p className="text-gray-400 mt-2 text-sm">—</p>
                         </div>
                     );
                 }
@@ -89,20 +88,18 @@ export default function MarketOverview() {
                 const isArs = info.currency === 'ARS';
 
                 return (
-                    <div key={item.key} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
-                        <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
+                    <div key={item.key} className="glass-card rounded-xl p-5 hover:scale-[1.02] transition-transform duration-200">
+                        <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                             <span>{item.icon}</span> {item.name}
-                        </h3>
+                        </p>
 
-                        <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {isArs ? '$' : 'US$ '}
-                                {info.price.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                        </div>
+                        <p className="text-xl font-bold font-mono text-gray-900 dark:text-white mt-2">
+                            {isArs ? '$' : 'US$'}
+                            {info.price.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
 
-                        <div className={`mt-2 text-sm font-medium flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                            <span>{isPositive ? '↑' : '↓'}</span>
+                        <div className={`mt-1.5 text-xs font-mono font-semibold flex items-center gap-0.5 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                            <span>{isPositive ? '▲' : '▼'}</span>
                             <span>{Math.abs(info.change_percent).toFixed(2)}%</span>
                         </div>
                     </div>

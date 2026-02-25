@@ -35,7 +35,7 @@ export default function PriceHistory() {
     if (error) return null;
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+        <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     📈 Precios Históricos (USD/ton)
@@ -46,8 +46,8 @@ export default function PriceHistory() {
                             key={d}
                             onClick={() => setPeriod(d)}
                             className={`px-3 py-1 text-sm rounded-full transition-colors ${period === d
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                         >
                             {d}d
