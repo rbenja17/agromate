@@ -206,8 +206,7 @@ async def run_pipeline_task():
         client = get_supabase_client()
         repo = NewsRepository(client)
         
-        # Prepare sentiment data
-        # Prepare sentiment data and filter out items without sentiment
+        # Filter out items without valid sentiment before saving
         valid_enriched_news = [item for item in enriched_news if item.get("sentiment")]
         
         sentiment_data = {

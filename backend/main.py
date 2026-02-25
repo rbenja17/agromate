@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from routers import news_router
 from routers.trends import router as trends_router
@@ -57,19 +58,16 @@ app = FastAPI(
 import os
 
 # Allowed origins for CORS
-# Using wildcard for initial deployment - can be restricted later
-ALLOWED_ORIGINS = ["*"]
-
-# For stricter security later, use:
-# ALLOWED_ORIGINS = [
-#     "https://agromate.pages.dev",
-#     "https://*.pages.dev",
-#     "http://localhost:3000",
-# ]
+ALLOWED_ORIGINS = [
+    "https://agromate.pages.dev",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.agromate\.pages\.dev",  # Preview deployments
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -134,11 +132,13 @@ async def health_check():
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
     """Custom 404 handler."""
-    return {
-        "error": "Not Found",
-        "message": f"The endpoint {request.url.path} does not exist",
-        "status_code": 404
-    }
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found",
+            "message": f"The endpoint {request.url.path} does not exist",
+        }
+    )
 
 
 @app.exception_handler(500)
@@ -149,8 +149,7 @@ async def internal_error_handler(request, exc):
         status_code=500,
         content={
             "error": "Internal Server Error",
-            "message": f"DEBUG INFO: {str(exc)}",
-            "status_code": 500
+            "message": "An unexpected error occurred. Please try again later.",
         }
     )
 

@@ -62,14 +62,15 @@ export default function MarketOverview() {
     }
 
     const commodities = [
-        { key: 'soja_rosario', name: 'Soja Rosario', icon: '🌱' },
-        { key: 'maiz_rosario', name: 'Maíz Rosario', icon: '🌽' },
-        { key: 'trigo_rosario', name: 'Trigo Rosario', icon: '🌾' },
-        { key: 'dolar', name: 'Dólar Oficial', icon: '💵' }
+        { key: 'soja_rosario', name: 'Soja (CBOT)', icon: '🌱' },
+        { key: 'maiz_rosario', name: 'Maíz (CBOT)', icon: '🌽' },
+        { key: 'trigo_rosario', name: 'Trigo (CBOT)', icon: '🌾' },
+        { key: 'dolar', name: 'Dólar Oficial', icon: '💵' },
+        { key: 'dolar_blue', name: 'Dólar Blue', icon: '💸' }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             {commodities.map((item) => {
                 const info = data.data[item.key] as MarketData;
 

@@ -12,7 +12,7 @@ async def get_market_data():
     Get latest market prices for commodities.
     """
     # Use real data service
-    data = MarketDataService.get_latest_prices()
+    data = await MarketDataService.get_latest_prices()
     
     # Simple fallback check
     if "error" in data:

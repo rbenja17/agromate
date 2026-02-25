@@ -104,10 +104,10 @@ async def get_daily_trends(
                     "neutral": 0
                 }
             
-            sentiment = (news.get('sentiment') or 'NEUTRAL').upper()
-            if sentiment == 'ALCISTA':
+            news_sentiment = (news.get('sentiment') or 'NEUTRAL').upper()
+            if news_sentiment == 'ALCISTA':
                 daily_data[date_key]['alcista'] += 1
-            elif sentiment == 'BAJISTA':
+            elif news_sentiment == 'BAJISTA':
                 daily_data[date_key]['bajista'] += 1
             else:
                 daily_data[date_key]['neutral'] += 1
@@ -158,26 +158,26 @@ async def get_trends_by_source(
         source_data = {}
         
         for news in all_news:
-            source = news.get('source', 'Unknown')
+            news_source = news.get('source', 'Unknown')
             
-            if source not in source_data:
-                source_data[source] = {
-                    "source": source,
+            if news_source not in source_data:
+                source_data[news_source] = {
+                    "source": news_source,
                     "alcista": 0,
                     "bajista": 0,
                     "neutral": 0,
                     "total": 0
                 }
             
-            sentiment = (news.get('sentiment') or 'NEUTRAL').upper()
-            if sentiment == 'ALCISTA':
-                source_data[source]['alcista'] += 1
-            elif sentiment == 'BAJISTA':
-                source_data[source]['bajista'] += 1
+            news_sentiment = (news.get('sentiment') or 'NEUTRAL').upper()
+            if news_sentiment == 'ALCISTA':
+                source_data[news_source]['alcista'] += 1
+            elif news_sentiment == 'BAJISTA':
+                source_data[news_source]['bajista'] += 1
             else:
-                source_data[source]['neutral'] += 1
+                source_data[news_source]['neutral'] += 1
             
-            source_data[source]['total'] += 1
+            source_data[news_source]['total'] += 1
         
         return {
             "data": list(source_data.values())
