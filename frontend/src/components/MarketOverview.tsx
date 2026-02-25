@@ -35,8 +35,8 @@ export default function MarketOverview() {
         };
 
         loadMarket();
-        // Refresh every 5 minutes
-        const interval = setInterval(loadMarket, 300000);
+        // Refresh every 60 seconds
+        const interval = setInterval(loadMarket, 60000);
         return () => clearInterval(interval);
     }, []);
 
