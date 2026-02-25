@@ -198,19 +198,30 @@ async def run_pipeline_task():
         
         logger.info(f"Total scraped: {len(all_news)} articles")
         
-        # Step 2: Analyze sentiment with GROQ (real LLM)
-        from sentiment.llm_client import get_llm_client
-        llm_client = get_llm_client(use_mock=False)  # Use real Groq API
-        analyzer = SentimentAnalyzer(llm_client=llm_client)
-        enriched_news = analyzer.analyze_news(all_news)
-        
-        logger.info(f"Analyzed {len(enriched_news)} articles")
-        
-        # Step 3: Save to database
+        # Step 2: Filter out articles already in DB to save tokens
         client = get_supabase_client()
         repo = NewsRepository(client)
         
-        # Filter out items without valid sentiment before saving
+        new_news = []
+        for article in all_news:
+            if not repo.exists(str(article.url)):
+                new_news.append(article)
+        
+        logger.info(f"New articles to analyze: {len(new_news)} (skipped {len(all_news) - len(new_news)} existing)")
+        
+        if len(new_news) == 0:
+            logger.info("Pipeline completed: No new articles to analyze")
+            return
+        
+        # Step 3: Analyze sentiment ONLY for new articles
+        from sentiment.llm_client import get_llm_client
+        llm_client = get_llm_client(use_mock=False)  # Use real Groq API
+        analyzer = SentimentAnalyzer(llm_client=llm_client)
+        enriched_news = analyzer.analyze_news(new_news)
+        
+        logger.info(f"Analyzed {len(enriched_news)} articles")
+        
+        # Step 4: Save to database
         valid_enriched_news = [item for item in enriched_news if item.get("sentiment")]
         
         sentiment_data = {
@@ -222,10 +233,8 @@ async def run_pipeline_task():
             for item in valid_enriched_news
         }
         
-        # Only upsert news that have been successfully enriched
-        # We extract the original news items corresponding to the enriched ones
         valid_urls = set(item["url"] for item in valid_enriched_news)
-        valid_news_objects = [n for n in all_news if str(n.url) in valid_urls]
+        valid_news_objects = [n for n in new_news if str(n.url) in valid_urls]
         
         if valid_news_objects:
              results = repo.upsert_news(valid_news_objects, sentiment_data)

@@ -95,8 +95,7 @@ class GroqLLMClient(BaseLLMClient):
     Real LLM client using Groq API (FREE TIER).
     
     Uses llama-3.3-70b-versatile for high-quality sentiment analysis.
-    Free tier: 30 requests per minute, 14,400 per day.
-    Rate limiter: 2s delay between calls to stay well within limits.
+    Free tier: 30 requests per minute, 100K tokens per day.
     """
     
     MAX_RETRIES = 3
@@ -117,13 +116,24 @@ class GroqLLMClient(BaseLLMClient):
         
         self.client = Groq(api_key=self.api_key)
         self.model = model
-        self._last_call_time = 0.0
+        self._daily_limit_hit = False
         
         from .prompts import SYSTEM_PROMPT, build_analysis_prompt
         self.system_prompt = SYSTEM_PROMPT
         self.build_prompt = build_analysis_prompt
         
         logger.info(f"GroqLLMClient initialized (model: {model})")
+    
+    def _parse_retry_after(self, error_str: str) -> float:
+        """Parse 'try again in XmYs' from Groq error to get exact wait time."""
+        import re
+        # Match patterns like "3m47.232s", "47.232s", "2m30s"
+        match = re.search(r'try again in (\d+m)?(\d+\.?\d*s)', error_str)
+        if match:
+            minutes = float(match.group(1).replace('m', '')) if match.group(1) else 0
+            seconds = float(match.group(2).replace('s', ''))
+            return minutes * 60 + seconds + 1  # +1s buffer
+        return 30  # default
     
     def _call_groq(self, user_prompt: str) -> str:
         """Make a single Groq API call."""
@@ -141,6 +151,10 @@ class GroqLLMClient(BaseLLMClient):
     
     def analyze(self, text: str, source: str = None) -> Dict[str, any]:
         """Analyze text with retry logic and detailed logging."""
+        # If daily limit was hit, skip immediately
+        if self._daily_limit_hit:
+            return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "daily_limit"}
+        
         user_prompt = self.build_prompt(text, source)
         
         for attempt in range(1, self.MAX_RETRIES + 1):
@@ -181,18 +195,24 @@ class GroqLLMClient(BaseLLMClient):
             except json.JSONDecodeError as e:
                 logger.warning(f"[Groq attempt {attempt}/{self.MAX_RETRIES}] JSON parse error for '{text[:40]}': {e}")
                 if attempt < self.MAX_RETRIES:
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(2 ** attempt)
                     continue
                 return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "json_parse_error"}
                 
             except Exception as e:
                 error_str = str(e)
-                logger.warning(f"[Groq attempt {attempt}/{self.MAX_RETRIES}] Error for '{text[:40]}': {error_str[:100]}")
+                logger.warning(f"[Groq attempt {attempt}/{self.MAX_RETRIES}] Error for '{text[:40]}': {error_str[:200]}")
                 
-                # Check for rate limit errors specifically
+                # Check for DAILY token limit (TPD) — stop immediately, no point retrying
+                if "tokens per day" in error_str.lower() or "TPD" in error_str:
+                    logger.error(f"[Groq] DAILY TOKEN LIMIT HIT. Stopping all analysis.")
+                    self._daily_limit_hit = True
+                    return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "daily_token_limit"}
+                
+                # Per-minute rate limit — parse exact wait time and retry
                 if "rate_limit" in error_str.lower() or "429" in error_str:
-                    wait_time = 60 if attempt == self.MAX_RETRIES else (5 * attempt)
-                    logger.warning(f"Rate limit hit! Waiting {wait_time}s before retry...")
+                    wait_time = self._parse_retry_after(error_str)
+                    logger.warning(f"Rate limit hit! Waiting {wait_time:.0f}s (parsed from error)...")
                     time.sleep(wait_time)
                 elif attempt < self.MAX_RETRIES:
                     time.sleep(2 ** attempt)
