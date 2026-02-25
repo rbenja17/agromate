@@ -137,6 +137,7 @@ class NewsRepository:
                     sentiment_info = sentiment_data[news_dict["url"]]
                     news_dict["sentiment"] = sentiment_info.get("sentiment")
                     news_dict["confidence"] = sentiment_info.get("confidence")
+                    news_dict["commodity"] = sentiment_info.get("commodity", "GENERAL")
                 
                 data_list.append(news_dict)
             

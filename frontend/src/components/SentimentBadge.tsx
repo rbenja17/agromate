@@ -12,7 +12,7 @@ interface SentimentBadgeProps {
 export default function SentimentBadge({ sentiment, confidence }: SentimentBadgeProps) {
     if (!sentiment) {
         return (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
                 Sin análisis
             </span>
         );
@@ -22,29 +22,29 @@ export default function SentimentBadge({ sentiment, confidence }: SentimentBadge
         switch (sentiment) {
             case 'ALCISTA':
                 return {
-                    bg: 'bg-green-100',
-                    text: 'text-green-800',
+                    bg: 'bg-green-100 dark:bg-green-900/40',
+                    text: 'text-green-800 dark:text-green-300',
                     icon: '↑',
                     label: 'Alcista'
                 };
             case 'BAJISTA':
                 return {
-                    bg: 'bg-red-100',
-                    text: 'text-red-800',
+                    bg: 'bg-red-100 dark:bg-red-900/40',
+                    text: 'text-red-800 dark:text-red-300',
                     icon: '↓',
                     label: 'Bajista'
                 };
             case 'NEUTRAL':
                 return {
-                    bg: 'bg-gray-100',
-                    text: 'text-gray-800',
+                    bg: 'bg-gray-200 dark:bg-gray-600',
+                    text: 'text-gray-700 dark:text-gray-300',
                     icon: '→',
                     label: 'Neutral'
                 };
             default:
                 return {
-                    bg: 'bg-gray-100',
-                    text: 'text-gray-600',
+                    bg: 'bg-gray-200 dark:bg-gray-600',
+                    text: 'text-gray-600 dark:text-gray-300',
                     icon: '?',
                     label: 'Desconocido'
                 };

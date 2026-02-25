@@ -216,7 +216,8 @@ async def run_pipeline_task():
         sentiment_data = {
             item["url"]: {
                 "sentiment": item["sentiment"],
-                "confidence": item["confidence"]
+                "confidence": item["confidence"],
+                "commodity": item.get("commodity", "GENERAL")
             }
             for item in valid_enriched_news
         }

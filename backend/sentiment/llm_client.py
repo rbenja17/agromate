@@ -179,8 +179,8 @@ class GroqLLMClient(BaseLLMClient):
                 final_sentiment = validated.sentiment
                 final_confidence = validated.confidence
                 
-                # Rule: Low confidence (< 0.5) -> NEUTRAL
-                if final_confidence < 0.5:
+                # Rule: Low confidence (< 0.3) -> NEUTRAL
+                if final_confidence < 0.3:
                     final_sentiment = "NEUTRAL"
                     
                 analysis_result = {
