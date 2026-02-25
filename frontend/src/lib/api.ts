@@ -316,3 +316,65 @@ export async function fetchMarketData() {
         throw new Error('Failed to fetch market data.');
     }
 }
+
+
+/**
+ * Fetch pipeline status (last run info).
+ */
+export async function fetchPipelineStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/pipeline/status`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching pipeline status:', error);
+        return { last_pipeline_run: null, last_article_date: null };
+    }
+}
+
+
+/**
+ * Fetch AI-generated daily summary.
+ */
+export async function fetchDailySummary() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/summary/daily`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching daily summary:', error);
+        throw new Error('Failed to fetch daily summary.');
+    }
+}
+
+
+/**
+ * Fetch historical market data.
+ */
+export async function fetchMarketHistory(days: number = 30, commodity: string = 'soja,maiz,trigo') {
+    try {
+        const params = new URLSearchParams({ days: days.toString(), commodity });
+        const response = await fetch(`${API_BASE_URL}/api/market/history?${params}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching market history:', error);
+        throw new Error('Failed to fetch market history.');
+    }
+}
+
+
+/**
+ * Fetch divergence analysis.
+ */
+export async function fetchDivergence(commodity: string = 'soja', days: number = 7) {
+    try {
+        const params = new URLSearchParams({ commodity, days: days.toString() });
+        const response = await fetch(`${API_BASE_URL}/api/divergence?${params}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching divergence:', error);
+        return null;
+    }
+}

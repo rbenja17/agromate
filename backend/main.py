@@ -79,6 +79,12 @@ app.include_router(news_router)
 app.include_router(trends_router)
 from routers.market import router as market_router
 app.include_router(market_router)
+from routers.summary import router as summary_router
+app.include_router(summary_router)
+from routers.history import router as history_router
+app.include_router(history_router)
+from routers.divergence import router as divergence_router
+app.include_router(divergence_router)
 
 
 @app.get("/", tags=["root"])
@@ -97,9 +103,14 @@ async def root():
             "stats": "/api/stats",
             "recent": "/api/recent",
             "pipeline": "/api/pipeline/run",
+            "pipeline_status": "/api/pipeline/status",
             "trends_daily": "/api/trends/daily",
             "trends_by_source": "/api/trends/by-source",
-            "trends_timeline": "/api/trends/timeline"
+            "trends_timeline": "/api/trends/timeline",
+            "summary_daily": "/api/summary/daily",
+            "market_latest": "/api/market/latest",
+            "market_history": "/api/market/history",
+            "divergence": "/api/divergence"
         }
     }
 

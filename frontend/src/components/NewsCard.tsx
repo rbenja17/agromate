@@ -25,19 +25,19 @@ export default function NewsCard({ article }: NewsCardProps) {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border border-gray-200 dark:border-gray-700">
             {/* Header with source and date */}
             <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
                     {article.source}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatDate(article.published_at)}
                 </span>
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 cursor-pointer">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
                 <a href={article.url} target="_blank" rel="noopener noreferrer">
                     {article.title}
                 </a>
@@ -67,7 +67,7 @@ export default function NewsCard({ article }: NewsCardProps) {
             {/* Commodity tag (badge visual con emoji) */}
             {article.commodity && article.commodity !== 'GENERAL' && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
                         {article.commodity === 'SOJA' && '🌱'}
                         {article.commodity === 'MAÍZ' && '🌽'}
                         {article.commodity === 'TRIGO' && '🌾'}

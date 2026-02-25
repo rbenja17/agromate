@@ -35,12 +35,12 @@ export default function FilterPanel({
     const hasActiveFilters = Object.values(filters).some(v => v !== null);
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 border border-gray-200 dark:border-gray-700">
             <div
                 className="flex items-center justify-between cursor-pointer"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     Filtros
                     {hasActiveFilters && (
                         <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
@@ -49,7 +49,7 @@ export default function FilterPanel({
                     )}
                 </h3>
                 <svg
-                    className={`w-5 h-5 text-gray-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

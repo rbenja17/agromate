@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["news"])
 
+# Track pipeline runs in memory (reset on restart)
+_last_pipeline_run = None
+_last_pipeline_articles = 0
+
 
 def dict_to_news_response(news_dict: dict) -> NewsResponse:
     """
@@ -230,6 +234,9 @@ async def run_pipeline_task():
         
     except Exception as e:
         logger.error(f"Pipeline task failed: {e}")
+    finally:
+        global _last_pipeline_run
+        _last_pipeline_run = datetime.utcnow().isoformat()
 
 
 @router.post("/pipeline/run", response_model=PipelineResponse)
@@ -255,6 +262,35 @@ async def run_pipeline(background_tasks: BackgroundTasks):
     except Exception as e:
         logger.error(f"Error starting pipeline: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to start pipeline: {str(e)}")
+
+
+@router.get("/pipeline/status")
+async def get_pipeline_status():
+    """
+    Get the status of the last pipeline run.
+    Returns last run timestamp and article count.
+    """
+    try:
+        # Try to get the most recent article date from DB as a proxy
+        client = get_supabase_client()
+        repo = NewsRepository(client)
+        recent = repo.get_recent(hours=24*30, limit=1)  # last 30 days
+        
+        last_article_date = None
+        if recent:
+            last_article_date = recent[0].get('created_at') or recent[0].get('published_at')
+        
+        return {
+            "last_pipeline_run": _last_pipeline_run,
+            "last_article_date": last_article_date,
+            "articles_in_last_run": _last_pipeline_articles
+        }
+    except Exception as e:
+        return {
+            "last_pipeline_run": _last_pipeline_run,
+            "last_article_date": None,
+            "articles_in_last_run": 0
+        }
 
 
 @router.get("/recent", response_model=NewsListResponse)

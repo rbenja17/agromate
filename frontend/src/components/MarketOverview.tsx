@@ -44,9 +44,9 @@ export default function MarketOverview() {
         return (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-                        <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                    <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                     </div>
                 ))}
             </div>
@@ -55,7 +55,7 @@ export default function MarketOverview() {
 
     if (error || !data || !data.data) {
         return (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-8 text-center text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-lg mb-8 text-center text-sm">
                 Datos de mercado no disponibles
             </div>
         );
@@ -76,8 +76,8 @@ export default function MarketOverview() {
 
                 if (!info || 'error' in info) {
                     return (
-                        <div key={item.key} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                            <h3 className="text-gray-500 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
+                        <div key={item.key} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                            <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
                                 <span>{item.icon}</span> {item.name}
                             </h3>
                             <p className="text-gray-400 mt-2 text-sm">No disponible</p>
@@ -89,13 +89,13 @@ export default function MarketOverview() {
                 const isArs = info.currency === 'ARS';
 
                 return (
-                    <div key={item.key} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                        <h3 className="text-gray-500 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
+                    <div key={item.key} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                        <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm flex items-center gap-2 uppercase tracking-wide">
                             <span>{item.icon}</span> {item.name}
                         </h3>
 
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-gray-900">
+                            <span className="text-2xl font-bold text-gray-900 dark:text-white">
                                 {isArs ? '$' : 'US$ '}
                                 {info.price.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
