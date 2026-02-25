@@ -100,7 +100,6 @@ class GroqLLMClient(BaseLLMClient):
     """
     
     MAX_RETRIES = 3
-    RATE_LIMIT_DELAY = 1.2  # seconds between calls (~50/min, safe for 30 rpm tier)
     
     def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile"):
         try:
@@ -124,20 +123,10 @@ class GroqLLMClient(BaseLLMClient):
         self.system_prompt = SYSTEM_PROMPT
         self.build_prompt = build_analysis_prompt
         
-        logger.info(f"GroqLLMClient initialized (model: {model}, rate_limit: {self.RATE_LIMIT_DELAY}s)")
-    
-    def _rate_limit(self):
-        """Enforce rate limiting between API calls."""
-        elapsed = time.time() - self._last_call_time
-        if elapsed < self.RATE_LIMIT_DELAY:
-            sleep_time = self.RATE_LIMIT_DELAY - elapsed
-            logger.debug(f"Rate limiting: sleeping {sleep_time:.1f}s")
-            time.sleep(sleep_time)
-        self._last_call_time = time.time()
+        logger.info(f"GroqLLMClient initialized (model: {model})")
     
     def _call_groq(self, user_prompt: str) -> str:
-        """Make a single Groq API call with rate limiting."""
-        self._rate_limit()
+        """Make a single Groq API call."""
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
