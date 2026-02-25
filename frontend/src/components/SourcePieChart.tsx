@@ -20,7 +20,7 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 export default function SourcePieChart({ data }: SourcePieChartProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <div className="glass-card rounded-xl p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Distribución por Fuente</h3>
                 <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
                     <p className="font-medium">No hay datos de fuentes</p>
@@ -36,7 +36,7 @@ export default function SourcePieChart({ data }: SourcePieChartProps) {
     }));
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+        <div className="glass-card rounded-xl p-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Distribución por Fuente</h3>
 
             <ResponsiveContainer width="100%" height={300}>

@@ -19,7 +19,7 @@ interface TrendChartProps {
 export default function TrendChart({ data }: TrendChartProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <div className="glass-card rounded-xl p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Tendencia Diaria</h3>
                 <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
                     <p className="font-medium">No hay datos de tendencia para este período</p>
@@ -29,7 +29,7 @@ export default function TrendChart({ data }: TrendChartProps) {
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+        <div className="glass-card rounded-xl p-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Tendencia Diaria</h3>
 
             <ResponsiveContainer width="100%" height={300}>

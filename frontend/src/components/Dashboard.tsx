@@ -1,11 +1,11 @@
 /**
- * Main Dashboard component for Agromate.
- * Professional tab-based navigation with all market analysis features.
+ * Main Dashboard — Premium Bento Grid with Segmented Controls.
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Article, SentimentStats, FilterState } from '@/types';
 import { fetchNews, fetchStats, triggerPipeline, fetchDailyTrends, fetchSourceTrends, fetchSentimentTimeline, fetchPipelineStatus } from '@/lib/api';
 import NewsCard from './NewsCard';
@@ -19,6 +19,7 @@ import PriceHistory from './PriceHistory';
 import DivergenceAlert from './DivergenceAlert';
 import DollarCorrelation from './DollarCorrelation';
 import ThemeToggle from './ThemeToggle';
+import ResponsiveAd from './ResponsiveAd';
 
 const TABS = [
     { id: 'resumen', label: 'Resumen', icon: '📊' },
@@ -38,8 +39,7 @@ function getTimeAgo(dateStr: string): string {
     if (diffMin < 60) return `hace ${diffMin} min`;
     const diffHours = Math.floor(diffMin / 60);
     if (diffHours < 24) return `hace ${diffHours}h`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `hace ${diffDays}d`;
+    return `hace ${Math.floor(diffHours / 24)}d`;
 }
 
 export default function Dashboard() {
@@ -51,49 +51,35 @@ export default function Dashboard() {
     const [timeline, setTimeline] = useState<any>(null);
     const [lastUpdate, setLastUpdate] = useState<string | null>(null);
     const [filters, setFilters] = useState<FilterState>({
-        source: null,
-        sentiment: null,
-        commodity: null,
-        dateFrom: null,
-        dateTo: null
+        source: null, sentiment: null, commodity: null, dateFrom: null, dateTo: null
     });
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadData();
-        loadPipelineStatus();
-    }, []);
+    useEffect(() => { loadData(); loadPipelineStatus(); }, []);
 
     const loadPipelineStatus = async () => {
         try {
             const status = await fetchPipelineStatus();
             setLastUpdate(status.last_article_date || status.last_pipeline_run);
-        } catch (e) { }
+        } catch { }
     };
 
     const loadData = async () => {
         try {
             setLoading(true);
             setError(null);
-
-            const currentFilters = {
+            const f = {
                 sentiment: filters.sentiment || undefined,
-                source: filters.source && filters.source.length > 0 ? filters.source : undefined,
+                source: filters.source?.length ? filters.source : undefined,
                 commodity: filters.commodity || undefined,
                 dateFrom: filters.dateFrom || undefined,
                 dateTo: filters.dateTo || undefined
             };
-
             const [newsData, statsData, trendsDaily, trendsSource, trendsTimeline] = await Promise.all([
-                fetchNews(50, currentFilters),
-                fetchStats(),
-                fetchDailyTrends(7, currentFilters),
-                fetchSourceTrends(currentFilters),
-                fetchSentimentTimeline(7, currentFilters)
+                fetchNews(50, f), fetchStats(), fetchDailyTrends(7, f), fetchSourceTrends(f), fetchSentimentTimeline(7, f)
             ]);
-
             setNews(newsData.articles);
             setStats(statsData);
             setDailyTrends(trendsDaily);
@@ -112,10 +98,7 @@ export default function Dashboard() {
             setError(null);
             const response = await triggerPipeline();
             alert(`Pipeline iniciado: ${response.message}`);
-            setTimeout(() => {
-                loadData();
-                loadPipelineStatus();
-            }, 3000);
+            setTimeout(() => { loadData(); loadPipelineStatus(); }, 3000);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al ejecutar pipeline');
         } finally {
@@ -130,12 +113,24 @@ export default function Dashboard() {
         setTimeout(loadData, 100);
     };
 
+    // Helper: insert sponsored ad every 6th item
+    const renderNewsWithAds = () => {
+        const items: React.ReactNode[] = [];
+        news.forEach((article, i) => {
+            items.push(<NewsCard key={article.id} article={article} />);
+            if ((i + 1) % 6 === 0) {
+                items.push(<ResponsiveAd key={`ad-${i}`} variant="sponsored" />);
+            }
+        });
+        return items;
+    };
+
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen dark:bg-gray-900">
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-400">Cargando análisis de mercado...</p>
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Cargando dashboard...</p>
                 </div>
             </div>
         );
@@ -143,163 +138,139 @@ export default function Dashboard() {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen dark:bg-gray-900">
-                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
-                    <h3 className="text-red-800 dark:text-red-300 font-semibold mb-2">Error</h3>
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
-                    <button onClick={loadData} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        Reintentar
-                    </button>
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+                <div className="glass-card rounded-xl p-8 max-w-md text-center">
+                    <p className="text-red-400 font-medium mb-2">Error</p>
+                    <p className="text-red-300 text-sm mb-4">{error}</p>
+                    <button onClick={loadData} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Reintentar</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-            {/* Header */}
-            <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
+            {/* ─────── HEADER ─────── */}
+            <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Top bar */}
-                    <div className="flex items-center justify-between py-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="flex items-center justify-between py-3">
+                        {/* Logo + Status */}
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 🌾 Agromate
                             </h1>
-                            <div className="flex items-center gap-3 mt-0.5">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Análisis de sentimiento del mercado agropecuario argentino
-                                </p>
-                                {lastUpdate && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                        Actualizado {getTimeAgo(lastUpdate)}
-                                    </span>
-                                )}
-                            </div>
+                            {lastUpdate && (
+                                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/20">
+                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full live-pulse"></span>
+                                    Live · {getTimeAgo(lastUpdate)}
+                                </span>
+                            )}
                         </div>
-                        <div className="flex items-center gap-3">
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
                             <ThemeToggle />
                             <button
                                 onClick={handleUpdateAnalysis}
                                 disabled={updating}
-                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                                className="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-all flex items-center gap-1.5"
                             >
                                 {updating ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        Actualizando...
-                                    </>
+                                    <><div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>Analizando...</>
                                 ) : (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        Actualizar
-                                    </>
+                                    <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Actualizar</>
                                 )}
                             </button>
                         </div>
                     </div>
 
-                    {/* Tab Navigation */}
-                    <nav className="flex gap-1 -mb-px">
-                        {TABS.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-all duration-200 ${activeTab === tab.id
-                                        ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                                    }`}
-                            >
-                                <span>{tab.icon}</span>
-                                {tab.label}
-                            </button>
-                        ))}
-                    </nav>
+                    {/* ─── Segmented Control ─── */}
+                    <div className="pb-3">
+                        <div className="relative inline-flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1 gap-0.5">
+                            {TABS.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`relative z-10 flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${activeTab === tab.id
+                                            ? 'text-gray-900 dark:text-white'
+                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                        }`}
+                                >
+                                    <span className="text-sm">{tab.icon}</span>
+                                    <span className="hidden sm:inline">{tab.label}</span>
+                                </button>
+                            ))}
+
+                            {/* Animated highlight pill */}
+                            <motion.div
+                                className="absolute top-1 bottom-1 bg-white dark:bg-white/10 rounded-lg shadow-sm"
+                                layoutId="activeTab"
+                                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                style={{
+                                    left: `calc(${TABS.findIndex(t => t.id === activeTab)} * 25% + 4px)`,
+                                    width: `calc(25% - 6px)`
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            {/* Main content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* ─────── CONTENT ─────── */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-                {/* ===== TAB: RESUMEN ===== */}
+                {/* ═══ TAB: RESUMEN ═══ */}
                 {activeTab === 'resumen' && (
-                    <div className="space-y-6">
-                        {/* Market Overview (cotizaciones) */}
-                        <MarketOverview />
-
-                        {/* AI Summary */}
-                        <DailySummary />
-
-                        {/* Divergence Alerts */}
-                        <DivergenceAlert />
-
-                        {/* Stats cards */}
-                        {stats && (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Noticias</p>
-                                            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.total}</p>
-                                        </div>
-                                        <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-3">
-                                            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-green-500">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Alcistas</p>
-                                            <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.alcista}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{stats.alcista_percentage.toFixed(1)}%</p>
-                                        </div>
-                                        <div className="bg-green-100 dark:bg-green-900/30 rounded-full p-3">
-                                            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-red-500">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Bajistas</p>
-                                            <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.bajista}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{stats.bajista_percentage.toFixed(1)}%</p>
-                                        </div>
-                                        <div className="bg-red-100 dark:bg-red-900/30 rounded-full p-3">
-                                            <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-gray-500">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Neutrales</p>
-                                            <p className="text-3xl font-bold text-gray-700 dark:text-gray-300 mt-1">{stats.neutral}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{stats.neutral_percentage.toFixed(1)}%</p>
-                                        </div>
-                                        <div className="bg-gray-200 dark:bg-gray-700 rounded-full p-3">
-                                            <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div className="space-y-4">
+                        {/* Bento Grid */}
+                        <div className="bento-grid">
+                            {/* Row 1: Market Overview (full width) */}
+                            <div className="bento-wide">
+                                <MarketOverview />
                             </div>
-                        )}
+
+                            {/* Ad Banner between market and stats */}
+                            <div className="bento-wide">
+                                <ResponsiveAd variant="banner" />
+                            </div>
+
+                            {/* Row 2: Stats Cards */}
+                            {stats && (
+                                <>
+                                    <div className="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Noticias</p>
+                                        <p className="text-3xl font-bold font-mono text-gray-900 dark:text-white mt-2">{stats.total}</p>
+                                    </div>
+                                    <div className="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alcistas</p>
+                                        <p className="text-3xl font-bold font-mono text-green-500 mt-2">{stats.alcista}</p>
+                                        <p className="text-xs font-mono text-gray-500 dark:text-gray-500 mt-1">{stats.alcista_percentage.toFixed(1)}%</p>
+                                    </div>
+                                    <div className="glass-card rounded-xl p-5 border-l-4 border-red-500">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bajistas</p>
+                                        <p className="text-3xl font-bold font-mono text-red-500 mt-2">{stats.bajista}</p>
+                                        <p className="text-xs font-mono text-gray-500 dark:text-gray-500 mt-1">{stats.bajista_percentage.toFixed(1)}%</p>
+                                    </div>
+                                    <div className="glass-card rounded-xl p-5 border-l-4 border-gray-500">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Neutrales</p>
+                                        <p className="text-3xl font-bold font-mono text-gray-400 mt-2">{stats.neutral}</p>
+                                        <p className="text-xs font-mono text-gray-500 dark:text-gray-500 mt-1">{stats.neutral_percentage.toFixed(1)}%</p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Row 3: AI Summary (half) + Divergence (half) */}
+                            <div className="bento-half">
+                                <DailySummary />
+                            </div>
+                            <div className="bento-half">
+                                <DivergenceAlert />
+                            </div>
+                        </div>
                     </div>
                 )}
 
-                {/* ===== TAB: NOTICIAS ===== */}
+                {/* ═══ TAB: NOTICIAS ═══ */}
                 {activeTab === 'noticias' && (
                     <div className="space-y-6">
                         <FilterPanel
@@ -308,50 +279,45 @@ export default function Dashboard() {
                             onApply={handleApplyFilters}
                             onClear={handleClearFilters}
                         />
-
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                                Últimas Noticias Analizadas
-                            </h2>
-                            {news.length === 0 ? (
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
-                                    <p className="text-gray-600 dark:text-gray-400">No hay noticias disponibles. Ejecutá &quot;Actualizar&quot; para obtener datos.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {news.map((article) => (
-                                        <NewsCard key={article.id} article={article} />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            Últimas Noticias Analizadas
+                        </h2>
+                        {news.length === 0 ? (
+                            <div className="glass-card rounded-xl p-12 text-center">
+                                <p className="text-gray-500 dark:text-gray-400">No hay noticias. Presioná &quot;Actualizar&quot; para analizar.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {renderNewsWithAds()}
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* ===== TAB: TENDENCIAS ===== */}
+                {/* ═══ TAB: TENDENCIAS ═══ */}
                 {activeTab === 'tendencias' && (
                     <div className="space-y-6">
                         {dailyTrends && sourceTrends && timeline ? (
                             <>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <TrendChart data={dailyTrends.data} />
                                     <SourcePieChart data={sourceTrends.data} />
                                 </div>
                                 <SentimentTimeline data={timeline.data} />
                             </>
                         ) : (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
-                                <p className="text-gray-600 dark:text-gray-400">No hay datos de tendencias. Ejecutá &quot;Actualizar&quot; para obtener datos.</p>
+                            <div className="glass-card rounded-xl p-12 text-center">
+                                <p className="text-gray-500 dark:text-gray-400">No hay datos de tendencias.</p>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* ===== TAB: MERCADO ===== */}
+                {/* ═══ TAB: MERCADO ═══ */}
                 {activeTab === 'mercado' && (
                     <div className="space-y-6">
                         <MarketOverview />
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <PriceHistory />
                             <DollarCorrelation />
                         </div>

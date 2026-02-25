@@ -96,118 +96,123 @@ class GroqLLMClient(BaseLLMClient):
     
     Uses llama-3.3-70b-versatile for high-quality sentiment analysis.
     Free tier: 30 requests per minute, 14,400 per day.
+    Rate limiter: 2s delay between calls to stay well within limits.
     """
     
+    MAX_RETRIES = 3
+    RATE_LIMIT_DELAY = 2.0  # seconds between calls
+    
     def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile"):
-        """
-        Initialize the Groq LLM client.
-        
-        Args:
-            api_key: Groq API key. If not provided, reads from GROQ_API_KEY env var.
-            model: Model to use (default: llama-3.3-70b-versatile)
-            
-        Raises:
-            ValueError: If no API key is provided or found in environment.
-        """
         try:
             from groq import Groq
         except ImportError:
-            raise ImportError(
-                "groq package not installed. Run: pip install groq"
-            )
+            raise ImportError("groq package not installed. Run: pip install groq")
         
         self.api_key = api_key or os.getenv("GROQ_API_KEY")
         
         if not self.api_key:
             raise ValueError(
-                "GROQ_API_KEY not found. Please set it in your .env file:\n"
-                "GROQ_API_KEY=your_api_key_here\n\n"
-                "Get your free API key at: https://console.groq.com/keys"
+                "GROQ_API_KEY not found. Set it in .env or environment.\n"
+                "Get your free key at: https://console.groq.com/keys"
             )
         
         self.client = Groq(api_key=self.api_key)
         self.model = model
+        self._last_call_time = 0.0
         
-        # Import prompts
         from .prompts import SYSTEM_PROMPT, build_analysis_prompt
         self.system_prompt = SYSTEM_PROMPT
         self.build_prompt = build_analysis_prompt
         
-        logger.info(f"GroqLLMClient initialized (model: {model} - FREE TIER)")
+        logger.info(f"GroqLLMClient initialized (model: {model}, rate_limit: {self.RATE_LIMIT_DELAY}s)")
+    
+    def _rate_limit(self):
+        """Enforce rate limiting between API calls."""
+        elapsed = time.time() - self._last_call_time
+        if elapsed < self.RATE_LIMIT_DELAY:
+            sleep_time = self.RATE_LIMIT_DELAY - elapsed
+            logger.debug(f"Rate limiting: sleeping {sleep_time:.1f}s")
+            time.sleep(sleep_time)
+        self._last_call_time = time.time()
+    
+    def _call_groq(self, user_prompt: str) -> str:
+        """Make a single Groq API call with rate limiting."""
+        self._rate_limit()
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0,
+            max_tokens=150,
+            response_format={"type": "json_object"}
+        )
+        return response.choices[0].message.content.strip()
     
     def analyze(self, text: str, source: str = None) -> Dict[str, any]:
-        """
-        Analyze text and return sentiment classification using Groq.
+        """Analyze text with retry logic and detailed logging."""
+        user_prompt = self.build_prompt(text, source)
         
-        Args:
-            text: The text to analyze (news headline)
-            source: Optional source of the news
-            
-        Returns:
-            Dictionary with 'sentiment', 'confidence', and optionally 'reasoning'
-        """
-        try:
-            user_prompt = self.build_prompt(text, source)
-            
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0,
-                max_tokens=150,
-                response_format={"type": "json_object"}
-            )
-            
-            response_text = response.choices[0].message.content.strip()
-            
-            # Robust JSON parsing
+        for attempt in range(1, self.MAX_RETRIES + 1):
             try:
-                # Handle potential markdown code blocks
-                if "```json" in response_text:
-                    response_text = response_text.split("```json")[1].split("```")[0].strip()
-                elif "```" in response_text:
-                    response_text = response_text.split("```")[1].split("```")[0].strip()
+                response_text = self._call_groq(user_prompt)
                 
-                result_dict = json.loads(response_text)
+                # Log raw LLM response for debugging
+                logger.info(f"[Groq raw] '{text[:50]}' -> {response_text[:120]}")
                 
-                # Pydantic Validation
+                # Clean markdown code blocks
+                clean_text = response_text
+                if "```json" in clean_text:
+                    clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in clean_text:
+                    clean_text = clean_text.split("```")[1].split("```")[0].strip()
+                
+                result_dict = json.loads(clean_text)
                 validated = AgroSentimentResponse(**result_dict)
                 
-                # Logic Rules
                 final_sentiment = validated.sentiment
                 final_confidence = validated.confidence
                 
-                # Rule: Low confidence (< 0.3) -> NEUTRAL
+                # Rule: Very low confidence (< 0.3) -> NEUTRAL
                 if final_confidence < 0.3:
                     final_sentiment = "NEUTRAL"
-                    
+                
                 analysis_result = {
                     "sentiment": final_sentiment,
                     "confidence": round(final_confidence, 2),
                     "commodity": validated.commodity
                 }
-                
                 if validated.reasoning:
                     analysis_result["reasoning"] = validated.reasoning
                 
-                logger.debug(f"Groq analysis: '{text[:30]}...' -> {analysis_result['sentiment']} ({analysis_result['confidence']})")
+                logger.info(f"[Groq OK] '{text[:40]}' -> {final_sentiment} ({final_confidence:.2f}) [{validated.commodity}]")
                 return analysis_result
-
+                
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse Groq response: {response_text[:100]}... Error: {e}")
+                logger.warning(f"[Groq attempt {attempt}/{self.MAX_RETRIES}] JSON parse error for '{text[:40]}': {e}")
+                if attempt < self.MAX_RETRIES:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
                 return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "json_parse_error"}
                 
             except Exception as e:
-                # Pydantic validation error or other logic error
-                logger.error(f"Validation failed: {e}")
-                return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "IRRELEVANT", "error": "validation_error"}
-            
-        except Exception as e:
-            logger.error(f"Groq API connection error: {e}")
-            # Fallback to defaults instead of raising exception only if critical
-            return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "api_error"}
+                error_str = str(e)
+                logger.warning(f"[Groq attempt {attempt}/{self.MAX_RETRIES}] Error for '{text[:40]}': {error_str[:100]}")
+                
+                # Check for rate limit errors specifically
+                if "rate_limit" in error_str.lower() or "429" in error_str:
+                    wait_time = 60 if attempt == self.MAX_RETRIES else (5 * attempt)
+                    logger.warning(f"Rate limit hit! Waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
+                elif attempt < self.MAX_RETRIES:
+                    time.sleep(2 ** attempt)
+                
+                if attempt == self.MAX_RETRIES:
+                    logger.error(f"[Groq FAILED] All {self.MAX_RETRIES} attempts failed for '{text[:50]}': {error_str[:100]}")
+                    return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "api_error"}
+        
+        return {"sentiment": "NEUTRAL", "confidence": 0.0, "commodity": "GENERAL", "error": "unknown"}
 
 
 class MockLLMClient(BaseLLMClient):
